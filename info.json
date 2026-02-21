@@ -1,0 +1,13 @@
+{
+  "name": "airport-test",
+  "version": "0.1.0",
+  "title": "Airport test",
+  "author": "Arbillust",
+  "contact": "",
+  "homepage": "",
+  "factorio_version": "2.0",
+  "dependencies": [
+    "base >= 2.0.0"
+  ],
+  "description": "airport inspirated by dsp tower"
+}

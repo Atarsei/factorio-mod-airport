@@ -1,0 +1,82 @@
+require("placeholder")
+local config = require("config")
+data:extend({
+    {
+        type = 'simple-entity-with-owner',
+        name = config.prefix 'block5',
+        selection_box = {{-2.5, -2.5}, {2.5, 2.5}},
+        collision_box = {{-2.4, -2.4}, {2.4, 2.4}},
+        build_grid_size =  1,
+        icon = '__airport-test__/graphic/placeholder_v.png',
+        tile_width = 5,
+        tile_height = 5,
+        picture = placeholder(5)
+    },
+    {
+        type = 'item',
+        name = config.prefix'block5-item',
+        icon = '__airport-test__/graphic/placeholder_v.png',
+        icon_size = 64,
+        stack_size = 20,
+        place_result = config.prefix 'block5'
+    },
+    {
+        type = 'simple-entity-with-owner',
+        name = config.prefix 'terminal',
+        selection_box = {{-7.5, -2.5}, {7.5, 2.5}},
+        collision_box = {{-7.4, -2.4}, {7.4, 2.4}},
+        build_grid_size =  1,
+        icon = '__airport-test__/graphic/placeholder_v.png',
+        tile_width = 15,
+        tile_height = 5,
+        picture = require('graphic.terminal.index'),
+        render_layer = "floor",
+        flags = {"player-creation"}
+    },
+    {
+        type = 'item',
+        name = config.prefix 'terminal-item',
+        icon = '__airport-test__/graphic/terminal/terminal_h.png',
+        icon_size = 64,
+        stack_size = 20,
+        place_result = config.prefix 'terminal'
+    },
+    {
+        type = 'loader-1x1',
+        name = config.prefix 'terminal-loader',
+        icon = '__airport-test__/graphic/placeholder_v.png',
+        icon_size = 64,
+        picture = placeholder(1),
+        speed = 15/480,
+        filter_count = 0,
+        collision_box = {{-0.4, -0.4}, {0.4, 0.4}},
+        selection_box = {{-0.5, -0.5}, {0.5, 0.5}},
+        collision_mask = {
+            layers={transport_belt=true}
+        },
+        belt_animation_set = data.raw['loader']['loader'].belt_animation_set,
+        animation_speed_coefficient = data.raw['loader']['loader'].animation_speed_coefficient,
+        allow_container_interaction = true,
+        container_distance = 1,
+        selection_priority = 51
+    },
+    {
+        type = 'container',
+        name = config.prefix 'terminal-container',
+        icon = '__airport-test__/graphic/placeholder_v.png',
+        icon_size = 64,
+        picture = {
+            filename = '__airport-test__/graphic/placeholder_v.png',
+            size = { 64, 64 },
+            scale = 1/2
+        },
+        inventory_size = 10,
+        collision_box = {{-0.4, -0.4}, {0.4, 0.4}},
+        selection_box = {{-0.5, -0.5}, {0.5, 0.5}},
+        collision_mask = {
+            layers={}
+        },
+        flags = {"player-creation"},
+        selection_priority = 51
+    }
+})

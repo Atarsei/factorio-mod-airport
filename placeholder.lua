@@ -1,0 +1,23 @@
+
+function placeholder(tilesize)
+    local v= {
+        filename = "__airport-test__/graphic/placeholder_v.png",
+        size = { 64, 64 },
+        scale = tilesize/2
+    }
+    local h= {
+        filename = "__airport-test__/graphic/placeholder_h.png",
+        size = { 64, 64 },
+        scale = tilesize/2
+    }
+    return {
+        north = v,
+        east = h,
+        south = v,
+        west = h
+    }
+end
+
+function sprite()
+    
+end
