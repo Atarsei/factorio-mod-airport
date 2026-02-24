@@ -21,7 +21,7 @@ data:extend({
         place_result = config.prefix 'block5'
     },
     {
-        type = 'simple-entity-with-owner',
+        type = 'constant-combinator' ,
         name = config.prefix 'terminal',
         selection_box = {{-7.5, -2.5}, {7.5, 2.5}},
         collision_box = {{-7.4, -2.4}, {7.4, 2.4}},
@@ -29,9 +29,12 @@ data:extend({
         icon = '__airport-test__/graphic/placeholder_v.png',
         tile_width = 15,
         tile_height = 5,
-        picture = require('graphic.terminal.index'),
+        sprites = require('graphic.terminal.index'),
+        activity_led_light_offsets = data.raw['constant-combinator']['constant-combinator'].activity_led_light_offsets,
+        circuit_wire_connection_points = data.raw['constant-combinator']['constant-combinator'].circuit_wire_connection_points,
         render_layer = "floor",
-        flags = {"player-creation"}
+        flags = {"player-creation"},
+        minable = {mining_time = 0.2, result = config.prefix 'terminal-item'}
     },
     {
         type = 'item',
@@ -48,7 +51,7 @@ data:extend({
         icon_size = 64,
         picture = placeholder(1),
         speed = 15/480,
-        filter_count = 0,
+        filter_count = 1,
         collision_box = {{-0.4, -0.4}, {0.4, 0.4}},
         selection_box = {{-0.5, -0.5}, {0.5, 0.5}},
         collision_mask = {

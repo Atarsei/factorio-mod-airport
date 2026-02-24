@@ -76,3 +76,62 @@ event.on_event({defines.events.on_entity_died, defines.events.on_player_mined_en
 end, {
     { filter = "name", name = config.prefix 'terminal' }
 })
+
+event.on_event(defines.events.on_gui_opened, function(e)
+    ---@cast e EventData.on_gui_opened
+    if e.entity and e.entity.name == config.prefix 'terminal' then
+        local player = game.get_player(e.player_index)
+        if player then
+            player.opened = nil
+            helloworld_gui(player, e.entity)
+        end
+    end
+end)
+
+event.on_event(defines.events.on_gui_closed, function(e)
+    ---@cast e EventData.on_gui_closed
+    if e.gui_type == defines.gui_type.custom and e.element and e.element.name == "helloworld_frame" then
+        e.element.destroy()
+    end
+end)
+
+--- auto close
+function helloworld_gui(player,entity)
+    local frame = player.gui.screen.add{type="frame", name="helloworld_frame", caption="Hello World", direction="vertical",style="inset_frame_container_frame"}
+    frame.auto_center = true
+    player.opened = frame
+    local camera = frame.add{type="entity-preview", name="helloworld_camera", entity=entity}
+    camera.entity = entity
+    camera.style.minimal_height = 190
+    camera.style.horizontally_stretchable = true
+    local checkbox = frame.add{type="checkbox", name="helloworld_checkbox", caption="Allow aircrafts move to other airports", state=false}
+    frame.add{type="line", direction="horizontal"}
+    local flow = frame.add{type="flow", direction="vertical"}
+    item_gui(flow)
+    --frame.add{type="line", direction="horizontal"}
+    --item_gui(flow)
+
+end
+---@param elm LuaGuiElement
+function item_gui(elm)
+    local wrap = elm.add{type="flow",direction="horizontal"}
+    wrap.add{type="choose-elem-button",elem_type ='item'}
+    wrap.style.vertical_align = "center"
+
+    local bar = wrap.add{type="flow",direction="vertical"}
+    
+    local priority_group = bar.add{type="flow",direction="horizontal"}
+    priority_group.add{type="switch", left_label_caption="Supply", right_label_caption="Demand",allow_none_state=true}
+    priority_group.style.vertical_align = "center"
+    priority_group.add{type="label", caption="Priority:"}
+    priority_group.add{type="textfield",numeric=true,text="100",style="short_slider_value_textfield"}
+
+    local progress = bar.add{type="progressbar"}
+    progress.value = 0.8
+    local progress2 = bar.add{type="progressbar",value=0.3}
+    progress2.style.color = {r=0.3,g=0.3,b=1}
+    local slider = bar.add{type="slider",name="hello_slider", minimum_value = 0, maximum_value = 1, value = 0.4, value_step = 0.1,style="notched_slider"}
+    slider.style.horizontally_stretchable = true
+    return wrap
+end
+
