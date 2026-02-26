@@ -7,7 +7,7 @@ data:extend({
         selection_box = {{-2.5, -2.5}, {2.5, 2.5}},
         collision_box = {{-2.4, -2.4}, {2.4, 2.4}},
         build_grid_size =  1,
-        icon = '__airport-test__/graphic/placeholder_v.png',
+        icon = '__airport__/graphic/placeholder_v.png',
         tile_width = 5,
         tile_height = 5,
         picture = placeholder(5)
@@ -15,7 +15,7 @@ data:extend({
     {
         type = 'item',
         name = config.prefix'block5-item',
-        icon = '__airport-test__/graphic/placeholder_v.png',
+        icon = '__airport__/graphic/placeholder_v.png',
         icon_size = 64,
         stack_size = 20,
         place_result = config.prefix 'block5'
@@ -26,7 +26,7 @@ data:extend({
         selection_box = {{-7.5, -2.5}, {7.5, 2.5}},
         collision_box = {{-7.4, -2.4}, {7.4, 2.4}},
         build_grid_size =  1,
-        icon = '__airport-test__/graphic/placeholder_v.png',
+        icon = '__airport__/graphic/placeholder_v.png',
         tile_width = 15,
         tile_height = 5,
         sprites = require('graphic.terminal.index'),
@@ -39,7 +39,7 @@ data:extend({
     {
         type = 'item',
         name = config.prefix 'terminal-item',
-        icon = '__airport-test__/graphic/terminal/terminal_h.png',
+        icon = '__airport__/graphic/terminal/terminal_h.png',
         icon_size = 64,
         stack_size = 20,
         place_result = config.prefix 'terminal'
@@ -47,7 +47,7 @@ data:extend({
     {
         type = 'loader-1x1',
         name = config.prefix 'terminal-loader',
-        icon = '__airport-test__/graphic/placeholder_v.png',
+        icon = '__airport__/graphic/placeholder_v.png',
         icon_size = 64,
         picture = placeholder(1),
         speed = 15/480,
@@ -66,10 +66,10 @@ data:extend({
     {
         type = 'container',
         name = config.prefix 'terminal-container',
-        icon = '__airport-test__/graphic/placeholder_v.png',
+        icon = '__airport__/graphic/placeholder_v.png',
         icon_size = 64,
         picture = {
-            filename = '__airport-test__/graphic/placeholder_v.png',
+            filename = '__airport__/graphic/placeholder_v.png',
             size = { 64, 64 },
             scale = 1/2
         },

@@ -46,7 +46,7 @@
 ---|{[defines.events.on_gui_text_changed]: fun(event:EventData.on_gui_text_changed)}
 ---|{[defines.events.on_gui_value_changed]: fun(event:EventData.on_gui_value_changed)}
 
----@alias GuiDef LuaGuiElement.add_param | {children: GuiDef[]} | {handlers: string} | {style:LuaStyle}
+---@alias GuiDef LuaGuiElement.add_param | {children: GuiDef[]} | {handlers: string} | {on_created:fun(LuaGuiElement)}
 
 local event = require("event")
 local util = require("util")
@@ -72,30 +72,39 @@ end
 ---@param def GuiDef
 ---@param parent LuaGuiElement
 ---@return LuaGuiElement
-function ui.create(def, parent)
+function ui.create( parent,def)
+    local handlers = def.handlers
+    local on_created = def.on_created
+    local children = def.children
+    def.handlers = nil
+    def.on_created = nil
+    def.children = nil
+
     local element = parent.add(def)
 
-    if def.handlers then
+    if handlers then
         local tags = element.tags
-        element.tags = util.merge({tags,{symbol=def.handlers}})
+        element.tags = util.merge({tags,{symbol=handlers}})
     end
 
-    local style = def.style
-    if style then
-        if type(style)=="table"then
-            for key, value in pairs(style) do
-                element.style[key] = value
-            end
+    if on_created then
+        if type(on_created)=="function"then
+            on_created(element)
         end
     end
 
-    if def.children then
-        for _, child_def in ipairs(def.children) do
-            ui.create_element(child_def, element)
+    if children then
+        for _, child_def in ipairs(children) do
+            ui.create( element,child_def)
         end
     end
-
+ 
     return element
+end
+
+---@generic fn
+function recap(fn,p)
+
 end
 
 return ui

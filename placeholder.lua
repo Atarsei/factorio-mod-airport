@@ -1,12 +1,12 @@
 
 function placeholder(tilesize)
     local v= {
-        filename = "__airport-test__/graphic/placeholder_v.png",
+        filename = "__airport__/graphic/placeholder_v.png",
         size = { 64, 64 },
         scale = tilesize/2
     }
     local h= {
-        filename = "__airport-test__/graphic/placeholder_h.png",
+        filename = "__airport__/graphic/placeholder_h.png",
         size = { 64, 64 },
         scale = tilesize/2
     }
