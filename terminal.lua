@@ -2,12 +2,36 @@ local event = require("event")
 local config = require("config")
 local math2d = require("math2d")
 
----@class TerminalStorage
----@field terminal LuaEntity
+---@class Terminal
+---@field entity LuaEntity
 ---@field container LuaEntity
 ---@field loader LuaEntity
----@type TerminalStorage[]
+---@field airport_id integer?
+
+---@type Terminal[]
 storage.terminal = storage.terminal or {}
+---@class Airport
+---@field id integer
+---@field terminal Terminal
+---@field active_slot integer
+---@field slot SlotData[]
+---@class SlotData
+---@field item PrototypeWithQuality?
+---@field mode SwitchState
+---@field priority integer
+---@field threshold number
+local Airport = {}
+---@return SlotData
+function Airport.default_slot()
+    return {
+        item = nil,
+        mode = "left",
+        priority = 100,
+        threshold = 0.5
+    }
+end
+---@type Airport[]
+storage.airport = storage.airport or {}
 
 local function direction4_to_vector(direction)
     if direction == 0 then
@@ -47,11 +71,23 @@ event.on_event({defines.events.on_built_entity, defines.events.on_robot_built_en
     assert(container and loader, "Failed to create terminal container or loader")
     local unit_number = entity.unit_number
     assert(unit_number, "Terminal entity has no unit number")
-    storage.terminal[unit_number] = {
-        terminal = entity,
+    ---@type Terminal
+    local terminal = {
+        entity = entity,
         container = container,
-        loader = loader
+        loader = loader,
     }
+    local airport_id = #storage.airport + 1
+    ---@type Airport
+    local airport = {
+        id = airport_id,
+        terminal = terminal,
+        active_slot = 3,
+        slot = {Airport.default_slot(), Airport.default_slot(), Airport.default_slot()}
+    }
+    terminal.airport_id = airport_id
+    table.insert(storage.airport, airport)
+    storage.terminal[unit_number] = terminal
 end, {
     { filter = "name", name = config.prefix 'terminal' }
 })
@@ -83,55 +119,84 @@ event.on_event(defines.events.on_gui_opened, function(e)
         local player = game.get_player(e.player_index)
         if player then
             player.opened = nil
-            helloworld_gui(player, e.entity)
+            local terminal = storage.terminal[e.entity.unit_number]
+            assert(terminal, "Terminal data not found for unit number: " .. e.entity.unit_number)
+            Gui_airport(player, terminal.airport_id)
         end
     end
 end)
 
 event.on_event(defines.events.on_gui_closed, function(e)
     ---@cast e EventData.on_gui_closed
-    if e.gui_type == defines.gui_type.custom and e.element and e.element.name == "helloworld_frame" then
+    if e.gui_type == defines.gui_type.custom and e.element and e.element.name == config.prefix "airport_gui" then
         e.element.destroy()
     end
 end)
 
 --- auto close
-function helloworld_gui(player,entity)
-    local frame = player.gui.screen.add{type="frame", name="helloworld_frame", caption="Hello World", direction="vertical",style="inset_frame_container_frame"}
+--- @param player LuaPlayer
+--- @param airport_id integer
+function Gui_airport(player,airport_id)
+    assert(airport_id, "Airport ID is required to open the GUI")
+    local airport = storage.airport[airport_id]
+    local frame = player.gui.screen.add{type="frame", caption="Hello World", direction="vertical",style="inset_frame_container_frame",name = config.prefix"airport_gui"}
     frame.auto_center = true
     player.opened = frame
-    local camera = frame.add{type="entity-preview", name="helloworld_camera", entity=entity}
+    local entity = airport.terminal.entity
+    local camera = frame.add{type="entity-preview"}
     camera.entity = entity
     camera.style.minimal_height = 190
     camera.style.horizontally_stretchable = true
-    local checkbox = frame.add{type="checkbox", name="helloworld_checkbox", caption="Allow aircrafts move to other airports", state=false}
+    local checkbox = frame.add{type="checkbox",  caption="Allow aircrafts move to other airports", state=false}
     frame.add{type="line", direction="horizontal"}
     local flow = frame.add{type="flow", direction="vertical"}
-    item_gui(flow)
-    --frame.add{type="line", direction="horizontal"}
-    --item_gui(flow)
-
+    for index, _ in ipairs(airport.slot) do
+        Gui_airport_slot(flow, airport, index)
+    end
 end
 ---@param elm LuaGuiElement
-function item_gui(elm)
-    local wrap = elm.add{type="flow",direction="horizontal"}
-    wrap.add{type="choose-elem-button",elem_type ='item'}
+---@param airport Airport
+---@param slot_index integer 
+function Gui_airport_slot(elm, airport, slot_index)
+    local slot = airport.slot[slot_index]
+    local wrap = elm.add{type="frame",direction="horizontal",style="bordered_frame"}
+    local button = wrap.add{type="choose-elem-button",elem_type ='item-with-quality',name=config.prefix"airport_slot_item",tags = {airport_id = airport.id, slot_index = slot_index}}
+    button.elem_value = slot.item
     wrap.style.vertical_align = "center"
 
     local bar = wrap.add{type="flow",direction="vertical"}
     
     local priority_group = bar.add{type="flow",direction="horizontal"}
-    priority_group.add{type="switch", left_label_caption="Supply", right_label_caption="Demand",allow_none_state=true}
+    local switch = priority_group.add{type="switch", left_label_caption="Supply", right_label_caption="Demand",allow_none_state=true}
+    switch.switch_state  = slot.mode
     priority_group.style.vertical_align = "center"
     priority_group.add{type="label", caption="Priority:"}
-    priority_group.add{type="textfield",numeric=true,text="100",style="short_slider_value_textfield"}
+    priority_group.add{type="textfield",numeric=true,text=tostring(slot.priority),style="short_slider_value_textfield"}
 
-    local progress = bar.add{type="progressbar"}
+    local progress_table = bar.add{type="table", column_count=2}
+    progress_table.add{type="label", caption="Expected"}
+    local progress = progress_table.add{type="progressbar"}
+    progress.style.color = {r=0.3,g=0.3,b=1}
     progress.value = 0.8
-    local progress2 = bar.add{type="progressbar",value=0.3}
-    progress2.style.color = {r=0.3,g=0.3,b=1}
-    local slider = bar.add{type="slider",name="hello_slider", minimum_value = 0, maximum_value = 1, value = 0.4, value_step = 0.1,style="notched_slider"}
+    progress_table.add{type="label", caption="In Store"}
+    local progress2 = progress_table.add{type="progressbar",value=0.3}
+    
+    progress_table.add{type="label", caption="Threshold"}
+    local slider = progress_table.add{type="slider", minimum_value = 0, maximum_value = 1, value = slot.threshold, value_step = 0.1,style="notched_slider"}
     slider.style.horizontally_stretchable = true
     return wrap
 end
 
+event.on_event(defines.events.on_gui_elem_changed, function(e)
+    ---@cast e EventData.on_gui_elem_changed
+    if e.element.name == config.prefix"airport_slot_item" then
+        local item = e.element.elem_value
+        local tag = e.element.tags
+        game.print(helpers.table_to_json(tag))
+        local airport = storage.airport[tag.airport_id]
+        local slot_index = tag.slot_index
+        ---@cast item PrototypeWithQuality?
+        airport.slot[slot_index].item = item
+        game.print(helpers.table_to_json(airport.slot))
+    end
+end)

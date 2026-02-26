@@ -1,6 +1,3 @@
----@meta
----@diagnostic disable: lowercase-global
-
 ---@class EventManager
 local event = {}
 
