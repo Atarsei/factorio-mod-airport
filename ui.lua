@@ -46,7 +46,10 @@
 ---|{[defines.events.on_gui_text_changed]: fun(event:EventData.on_gui_text_changed)}
 ---|{[defines.events.on_gui_value_changed]: fun(event:EventData.on_gui_value_changed)}
 
----@alias GuiDef LuaGuiElement.add_param | {children: GuiDef[]} | {handlers: string} | {on_created:fun(LuaGuiElement)}
+---@alias GuiDefChild GuiDef|GuiDef[]
+---@alias GuiDefChildFn fun(children?:GuiDefUnresolvedChild[]):GuiDefUnresolvedChild
+---@alias GuiDefUnresolvedChild GuiDefChild
+---@alias GuiDef LuaGuiElement.add_param | {children?: GuiDefUnresolvedChild[]} | {handlers?: string} | {on_created?:fun(LuaGuiElement)}
 
 local event = require("event")
 local util = require("util")
@@ -59,6 +62,7 @@ function ui.define_handlers(symbol,handlers)
     for event_id, handler in pairs(handlers) do
         event.on_event(event_id, function (e)
             ---@cast e GuiEventData
+            if not e.element then return end
             local tags = e.element.tags
             if tags and tags.symbol == symbol then
                 handler(e)
@@ -84,6 +88,7 @@ function ui.create( parent,def)
 
     if handlers then
         local tags = element.tags
+        --tags.symbol=handlers
         element.tags = util.merge({tags,{symbol=handlers}})
     end
 
@@ -94,17 +99,41 @@ function ui.create( parent,def)
     end
 
     if children then
-        for _, child_def in ipairs(children) do
-            ui.create( element,child_def)
+        for _, child in ipairs(children) do
+            if child.type then
+                ui.create(element,child)
+            else
+                for _, value in ipairs(child) do
+                    ui.create( element,value)
+                end
+            end
         end
     end
  
     return element
 end
 
----@generic fn
-function recap(fn,p)
 
+---@param def GuiDef
+---@return fun(children?:GuiDef[]):GuiDef
+function ui.h(def)
+    return function (children)
+        def.children = children
+        return def.children
+    end
+end
+
+---@generic T
+---@generic R
+---@param t {integer:T}
+---@param fn fun(index:integer,value:T):R
+---@return R
+function ui.icollect(t,fn)
+    local collect= {}
+    for index, value in ipairs(t) do
+        table.insert(collect,fn(index,value))
+    end
+    return collect
 end
 
 return ui

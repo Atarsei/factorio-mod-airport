@@ -124,29 +124,32 @@ event.on_event(defines.events.on_gui_opened, function(e)
             player.opened = nil
             local terminal = storage.terminal[e.entity.unit_number]
             assert(terminal, "Terminal data not found for unit number: " .. e.entity.unit_number)
-            Gui_airport(player, terminal.airport_id)
+            player.opened = Gui_airport(player, terminal.airport_id)
         end
     end
 end)
 
-event.on_event(defines.events.on_gui_closed, function(e)
-    ---@cast e EventData.on_gui_closed
-    if e.gui_type == defines.gui_type.custom and e.element and e.element.name == config.prefix "airport_gui" then
-        e.element.destroy()
-    end
-end)
 
 local ui = require("ui")
+
+local close = ui.define_handlers("airport-close",{
+    [defines.events.on_gui_closed] = function (e)
+        e.element.destroy()
+    end
+})
+
 --- @param player LuaPlayer
 --- @param airport_id integer
+--- @return LuaGuiElement
 function Gui_airport(player, airport_id)
     assert(airport_id, "Airport ID is required to open the GUI")
     local airport = storage.airport[airport_id]
     local entity = airport.terminal.entity
 
-    ui.create(player.gui.screen,{
+    return ui.create(player.gui.screen,{
         type = "frame", caption = "Hello World", direction = "vertical", style = "inset_frame_container_frame", name = config.prefix "airport_gui",
         on_created = function(e) e.auto_center = true end,
+        handlers = close,
         children = {
             { type = "entity-preview" ,on_created =function (e)
                 e.entity = entity
