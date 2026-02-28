@@ -53,12 +53,17 @@
 
 local event = require("event")
 local util = require("util")
+---@class UI
 local ui = {}
 
+---@type table<string,true?>
+local symbol_existed = {}
 ---@param symbol string
 ---@param handlers GuiDefHandlers
 ---@return string
 function ui.define_handlers(symbol,handlers)
+    assert(not symbol_existed[symbol],"handlers symbol: '"..symbol.."'have already existed")
+    symbol_existed[symbol] = true
     for event_id, handler in pairs(handlers) do
         event.on_event(event_id, function (e)
             ---@cast e GuiEventData
@@ -70,6 +75,17 @@ function ui.define_handlers(symbol,handlers)
         end)
     end
     return symbol
+end
+
+---@generic T : table<string,GuiDefHandlers>
+---@param batch T
+---@return T | table<string, string>  -- Hack: remain Literal Keys hints of return value in LuaLS, because it's not typescript
+function ui.batch_handlers(batch)
+    local symbols = {}
+    for key, value in pairs(batch) do
+        symbols[key] = ui.define_handlers(key,value)
+    end
+    return symbols
 end
 
 
