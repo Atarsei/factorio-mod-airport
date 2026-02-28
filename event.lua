@@ -94,7 +94,7 @@ function event.entity(name)
                 if entity_name and entity_name == name then
                     handler(e)
                 end
-            end,{{filter="ghost",name = name}})
+            end,{{filter="ghost_name",name = name}})
             return ghost
         end
     end
