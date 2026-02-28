@@ -68,7 +68,8 @@ end
 function event.entity(name)
     ---@class Event.Entity
     local entity = {}
-    --- event_data must have "entity" | "destination"  field
+    local filters = {{filter="name",name=name}}
+    --- event_data must have "entity" | "destination" field
     ---@param event_id event_type
     ---@param handler fun(event: EventData)
     entity.on_event = function (event_id,handler)
@@ -78,7 +79,7 @@ function event.entity(name)
             if entity_name and entity_name == name then
                 handler(e)
             end
-        end,{{filter="name",name=name}})
+        end,(event_id~=defines.events.on_gui_opened) and filters or nil)
         return entity
     end
     entity.ghost = function ()
