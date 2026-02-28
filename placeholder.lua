@@ -1,12 +1,12 @@
-
+local config = require("config")
 function placeholder(tilesize)
     local v= {
-        filename = "__airport__/graphic/placeholder_v.png",
+        filename = config.path "graphic/placeholder_v.png",
         size = { 64, 64 },
         scale = tilesize/2
     }
     local h= {
-        filename = "__airport__/graphic/placeholder_h.png",
+        filename = config.path "graphic/placeholder_h.png",
         size = { 64, 64 },
         scale = tilesize/2
     }
