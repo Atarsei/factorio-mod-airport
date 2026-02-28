@@ -34,19 +34,8 @@ end
 ---@type Airport[]
 storage.airport = storage.airport or {}
 
-local function direction4_to_vector(direction)
-    if direction == 0 then
-        return { x = 0, y = -1 }
-    elseif direction == 4 then
-        return { x = 1, y = 0 }
-    elseif direction == 8 then
-        return { x = 0, y = 1 }
-    elseif direction == 12 then
-        return { x = -1, y = 0 }
-    end
-end
-
-event.on_event({ defines.events.on_built_entity, defines.events.on_robot_built_entity }, function(e)
+event.entity(config.name.terminal)
+.on_event({ defines.events.on_built_entity, defines.events.on_robot_built_entity }, function(e)
     ---@cast e EventData.on_built_entity|EventData.on_robot_built_entity
     local entity = e.entity
     if entity.name ~= config.prefix 'terminal' then
@@ -54,8 +43,8 @@ event.on_event({ defines.events.on_built_entity, defines.events.on_robot_built_e
     end
     local surface = entity.surface
     local position = entity.position
-    local opposite_direction = (entity.direction + 8) % 16
-    local opposite_vector = direction4_to_vector(opposite_direction)
+    local opposite_direction = util.oppositedirection(entity.direction)
+    local opposite_vector = util.direction_vectors[opposite_direction]
     local container = surface.create_entity {
         name = config.prefix 'terminal-container',
         position = math2d.position.add(position, opposite_vector),
@@ -89,50 +78,37 @@ event.on_event({ defines.events.on_built_entity, defines.events.on_robot_built_e
     terminal.airport_id = airport_id
     table.insert(storage.airport, airport)
     storage.terminal[unit_number] = terminal
-end, {
-    { filter = "name", name = config.prefix 'terminal' }
-})
-
-event.on_event(
-{ defines.events.on_entity_died, defines.events.on_player_mined_entity, defines.events.on_robot_mined_entity },
-    function(e)
-        ---@cast e EventData.on_entity_died|EventData.on_player_mined_entity|EventData.on_robot_mined_entity
-        local entity = e.entity
-        if entity.name ~= config.prefix 'terminal' then
-            return
-        end
-        local unit_number = entity.unit_number
-        if not unit_number then return end
-        local data = storage.terminal[unit_number]
-        if not data then return end
-        if data.container and data.container.valid then
-            data.container.destroy()
-        end
-        if data.loader and data.loader.valid then
-            data.loader.destroy()
-        end
-        storage.terminal[unit_number] = nil
-    end, {
-    { filter = "name", name = config.prefix 'terminal' }
-})
-
-event.on_event(defines.events.on_gui_opened, function(e)
+end)
+.on_event({ defines.events.on_entity_died, defines.events.on_player_mined_entity, defines.events.on_robot_mined_entity },function(e)
+    ---@cast e EventData.on_entity_died|EventData.on_player_mined_entity|EventData.on_robot_mined_entity
+    local entity = e.entity
+    local unit_number = entity.unit_number
+    if not unit_number then return end
+    local data = storage.terminal[unit_number]
+    if not data then return end
+    if data.container and data.container.valid then
+        data.container.destroy()
+    end
+    if data.loader and data.loader.valid then
+        data.loader.destroy()
+    end
+    storage.terminal[unit_number] = nil
+end)
+.on_event(defines.events.on_gui_opened,function (e)
     ---@cast e EventData.on_gui_opened
-    if e.entity and e.entity.name == config.prefix 'terminal' then
-        local player = game.get_player(e.player_index)
-        if player then
-            player.opened = nil
-            local terminal = storage.terminal[e.entity.unit_number]
-            assert(terminal, "Terminal data not found for unit number: " .. e.entity.unit_number)
-            player.opened = Gui_airport(player, terminal.airport_id)
-        end
+    local player = game.get_player(e.player_index)
+    if player then
+        player.opened = nil
+        local terminal = storage.terminal[e.entity.unit_number]
+        assert(terminal, "Terminal data not found for unit number: " .. e.entity.unit_number)
+        player.opened = Gui_airport(player, terminal.airport_id)
     end
 end)
 
 
 local ui = require("ui")
 
-local close = ui.define_handlers("airport-close",{
+local airport_gui = ui.define_handlers("airport-gui",{
     [defines.events.on_gui_closed] = function (e)
         e.element.destroy()
     end
@@ -147,9 +123,9 @@ function Gui_airport(player, airport_id)
     local entity = airport.terminal.entity
 
     return ui.create(player.gui.screen,{
-        type = "frame", caption = "Hello World", direction = "vertical", style = "inset_frame_container_frame", name = config.prefix "airport_gui",
+        type = "frame", caption = "Hello World", direction = "vertical", style = "inset_frame_container_frame",
         on_created = function(e) e.auto_center = true end,
-        handlers = close,
+        handlers = airport_gui,
         children = {
             { type = "entity-preview" ,on_created =function (e)
                 e.entity = entity
