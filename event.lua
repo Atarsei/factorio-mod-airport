@@ -18,12 +18,9 @@ function event.dispatch(event_id, event_data)
     end
 end
 
----@type table<LuaEventType,EventFilter>
-local global_filter = {}
 ---@type table<LuaEventType,true?>
 local filters_disable = {}
 
----@TODO refactor with LuaBootstrap.set_event_filter api
 ---@param event_id event_type
 ---@param handler fun(event: EventData)
 ---@param filters? EventFilter
@@ -35,32 +32,25 @@ function event.on_event(event_id, handler, filters)
         return
     end
 
-    local require_update_event = false
-
     if not handlers[event_id] then
         handlers[event_id] = {}
-        require_update_event = true
+        script.on_event(event_id, function(event_data)
+            event.dispatch(event_id, event_data)
+        end)
     end
     table.insert(handlers[event_id], handler)
 
     if not filters_disable[event_id] then
         if filters then
-            local old_filters = global_filter[event_id] or {}
+            local old_filters = script.get_event_filter(event_id) or {}
             for _, value in ipairs(filters) do
                 table.insert(old_filters,value)
             end
-            global_filter[event_id] = old_filters
+            script.set_event_filter(event_id,old_filters)
         else
             filters_disable[event_id] = true
-            global_filter[event_id]=nil
+            script.set_event_filter(event_id,nil)
         end
-        require_update_event = true
-    end
-
-    if require_update_event then
-        script.on_event(event_id, function(event_data)
-            event.dispatch(event_id, event_data)
-        end,global_filter[event_id])
     end
 end
 
