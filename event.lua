@@ -1,7 +1,7 @@
 ---@class EventManager
 local event = {}
 --- 存储每个事件对应的所有处理器
----@type table<LuaEventType, function[]>
+---@type table<LuaEventType, function[]?>
 local handlers = {}
 
 ---@alias event_type (LuaEventType)|((LuaEventType)[])
@@ -23,6 +23,7 @@ local global_filter = {}
 ---@type table<LuaEventType,true?>
 local filters_disable = {}
 
+---@TODO refactor with LuaBootstrap.set_event_filter api
 ---@param event_id event_type
 ---@param handler fun(event: EventData)
 ---@param filters? EventFilter
@@ -61,6 +62,43 @@ function event.on_event(event_id, handler, filters)
             event.dispatch(event_id, event_data)
         end,global_filter[event_id])
     end
+end
+
+---@type function[]?
+local init_handlers = nil
+---@param handler fun()
+function event.on_init(handler)
+    if not init_handlers then
+        init_handlers = {}
+        script.on_init(function ()
+            for _, fn in ipairs(init_handlers) do
+                fn()
+            end
+        end)
+    end
+    table.insert(init_handlers,handler)
+end
+
+---@type table<integer,fun(p1: NthTickEventData)[]?>
+local nth_tick_handlers = {}
+---@param tick integer|integer[]
+---@param handler fun(p1: NthTickEventData)
+function event.on_nth_tick(tick,handler)
+    if type(tick) == "table" then
+        for _, value in ipairs(tick) do
+            event.on_nth_tick(value,handler)
+        end
+        return
+    end
+    if not nth_tick_handlers[tick] then
+        nth_tick_handlers[tick]={}
+        script.on_nth_tick(tick,function (p1)
+            for _, fn in ipairs(nth_tick_handlers[tick]) do
+                fn(p1)
+            end
+        end)
+    end
+    table.insert(nth_tick_handlers[tick],handler)
 end
 
 --- Should only call once for each prototype name
