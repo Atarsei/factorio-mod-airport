@@ -31,20 +31,20 @@
 ---|EventData.on_gui_value_changed
 
 ---@alias GuiDefHandlers 
----|{[defines.events.on_gui_checked_state_changed]: fun(event:EventData.on_gui_checked_state_changed)}
----|{[defines.events.on_gui_click]: fun(event:EventData.on_gui_click)}
----|{[defines.events.on_gui_closed]: fun(event:EventData.on_gui_closed)}
----|{[defines.events.on_gui_confirmed]: fun(event:EventData.on_gui_confirmed)}
----|{[defines.events.on_gui_elem_changed]: fun(event:EventData.on_gui_elem_changed)}
----|{[defines.events.on_gui_hover]: fun(event:EventData.on_gui_hover)}
----|{[defines.events.on_gui_leave]: fun(event:EventData.on_gui_leave)}
----|{[defines.events.on_gui_location_changed]: fun(event:EventData.on_gui_location_changed)}
----|{[defines.events.on_gui_opened]: fun(event:EventData.on_gui_opened)}
----|{[defines.events.on_gui_selected_tab_changed]: fun(event:EventData.on_gui_selected_tab_changed)}
----|{[defines.events.on_gui_selection_state_changed]: fun(event:EventData.on_gui_selection_state_changed)}
----|{[defines.events.on_gui_switch_state_changed]: fun(event:EventData.on_gui_switch_state_changed)}
----|{[defines.events.on_gui_text_changed]: fun(event:EventData.on_gui_text_changed)}
----|{[defines.events.on_gui_value_changed]: fun(event:EventData.on_gui_value_changed)}
+---|{[defines.events.on_gui_checked_state_changed]: fun(e:EventData.on_gui_checked_state_changed,tag:Tags)}
+---|{[defines.events.on_gui_click]: fun(e:EventData.on_gui_click,tag:Tags)}
+---|{[defines.events.on_gui_closed]: fun(e:EventData.on_gui_closed,tag:Tags)}
+---|{[defines.events.on_gui_confirmed]: fun(e:EventData.on_gui_confirmed,tag:Tags)}
+---|{[defines.events.on_gui_elem_changed]: fun(e:EventData.on_gui_elem_changed,tag:Tags)}
+---|{[defines.events.on_gui_hover]: fun(e:EventData.on_gui_hover,tag:Tags)}
+---|{[defines.events.on_gui_leave]: fun(e:EventData.on_gui_leave,tag:Tags)}
+---|{[defines.events.on_gui_location_changed]: fun(e:EventData.on_gui_location_changed,tag:Tags)}
+---|{[defines.events.on_gui_opened]: fun(e:EventData.on_gui_opened,tag:Tags)}
+---|{[defines.events.on_gui_selected_tab_changed]: fun(e:EventData.on_gui_selected_tab_changed,tag:Tags)}
+---|{[defines.events.on_gui_selection_state_changed]: fun(e:EventData.on_gui_selection_state_changed,tag:Tags)}
+---|{[defines.events.on_gui_switch_state_changed]: fun(e:EventData.on_gui_switch_state_changed,tag:Tags)}
+---|{[defines.events.on_gui_text_changed]: fun(e:EventData.on_gui_text_changed,tag:Tags)}
+---|{[defines.events.on_gui_value_changed]: fun(e:EventData.on_gui_value_changed,tag:Tags)}
 
 ---@alias GuiDefChild GuiDef|GuiDef[]
 ---@alias GuiDefChildFn fun(children?:GuiDefUnresolvedChild[]):GuiDefUnresolvedChild
@@ -70,22 +70,24 @@ function ui.define_handlers(symbol,handlers)
             if not e.element then return end
             local tags = e.element.tags
             if tags and tags.symbol == symbol then
-                handler(e)
+                handler(e,tags)
             end
         end)
     end
     return symbol
 end
 
----@generic T : table<string,GuiDefHandlers>
----@param batch T
----@return T | table<string, string>  -- Hack: remain Literal Keys hints of return value in LuaLS, because it's not typescript
-function ui.batch_handlers(batch)
-    local symbols = {}
-    for key, value in pairs(batch) do
-        symbols[key] = ui.define_handlers(key,value)
+---@param namespace string
+function ui.batch_handlers(namespace)
+    ---@class UI.BatchHandlers
+    local batch ={}
+    ---@param symbol string
+    ---@param handlers GuiDefHandlers
+    ---@return string
+    batch.define = function (symbol,handlers)
+        return ui.define_handlers(namespace..'-'..symbol,handlers)
     end
-    return symbols
+    return batch
 end
 
 

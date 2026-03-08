@@ -1,6 +1,6 @@
 ---@class Config
 local config = {}
----comment
+
 ---@param name string
 ---@return string
 function config.prefix(name)
@@ -14,7 +14,7 @@ config.name = {
 
 config.path = function (s)
     return '__airport__/'..s
-end 
+end
 
 for key, value in pairs(config.name) do
     config.name[key] = config.prefix(value)

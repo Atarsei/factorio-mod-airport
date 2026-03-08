@@ -1,11 +1,11 @@
 local config = require("config")
 local v = {
-    filename = config.path "__airport__/graphic/terminal/terminal_v.png",
+    filename = config.path "graphic/terminal/terminal_v.png",
     size = {  64 ,192},
     scale = 5/2
 }
 local h = {
-    filename = config.path "__airport__/graphic/terminal/terminal_h.png",
+    filename = config.path "graphic/terminal/terminal_h.png",
     size = { 192, 64 },
     scale = 5/2
 }
