@@ -17,7 +17,3 @@ function placeholder(tilesize)
         west = h
     }
 end
-
-function sprite()
-    
-end

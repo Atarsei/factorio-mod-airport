@@ -1,11 +1,5 @@
 local ui = require("ui")
 
-local airport_gui = ui.define_handlers("airport-gui", {
-    [defines.events.on_gui_closed] = function(e)
-        e.element.destroy()
-    end
-})
-
 local airport_handlers = ui.batch_handlers("airport")
 
 
@@ -126,20 +120,14 @@ local function Gui_airport(airport_id)
     local airport = storage.airport[airport_id]
     local entity = airport.terminal.entity
 
-    return {
-        type = "frame",
-        caption = "Airport",
-        direction = "vertical",
-        style = "inset_frame_container_frame",
-        on_created = function(e) e.auto_center = true end,
-        handlers = airport_gui,
-        children = {
+    return ui.window("Airport",{{
             {
                 type = "entity-preview",
+                style = "wide_entity_button",
                 on_created = function(e)
                     e.entity = entity
-                    e.style.minimal_height = 190
-                    e.style.horizontally_stretchable = true
+                    --e.style.minimal_height = 190
+                    --e.style.horizontally_stretchable = true
                 end
             },
             { type = "checkbox", caption = "Allow aircrafts move to other airports", state = false },
@@ -154,7 +142,7 @@ local function Gui_airport(airport_id)
                 }
             }
         }
-    }
+    })
 end
 
 

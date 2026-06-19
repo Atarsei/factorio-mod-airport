@@ -69,10 +69,10 @@ function event.on_init(handler)
     table.insert(init_handlers,handler)
 end
 
----@type table<integer,fun(p1: NthTickEventData)[]?>
+---@type table<integer,fun(e: NthTickEventData)[]?>
 local nth_tick_handlers = {}
 ---@param tick integer|integer[]
----@param handler fun(p1: NthTickEventData)
+---@param handler fun(e: NthTickEventData)
 function event.on_nth_tick(tick,handler)
     if type(tick) == "table" then
         for _, value in ipairs(tick) do
@@ -82,13 +82,28 @@ function event.on_nth_tick(tick,handler)
     end
     if not nth_tick_handlers[tick] then
         nth_tick_handlers[tick]={}
-        script.on_nth_tick(tick,function (p1)
+        script.on_nth_tick(tick,function (e)
             for _, fn in ipairs(nth_tick_handlers[tick]) do
-                fn(p1)
+                fn(e)
             end
         end)
     end
     table.insert(nth_tick_handlers[tick],handler)
+end
+---@type fun(e:NthTickEventData)[]?
+local next_tick_list = nil
+---@param handler fun(e: NthTickEventData)
+function event.next_tick(handler)
+    if next_tick_list == nil then
+        next_tick_list = {handler}
+        event.on_nth_tick(1,function (e)
+            for _ = 1, #next_tick_list, 1 do
+                table.remove(next_tick_list)(e)
+            end
+        end)
+    else
+        table.insert(next_tick_list,handler)
+    end
 end
 
 --- Should only call once for each prototype name
@@ -103,7 +118,7 @@ function event.entity(name)
     entity.on_event = function (event_id,handler)
         event.on_event(event_id,function (e)
             ---@cast e EventData.on_built_entity | EventData.on_pre_entity_settings_pasted
-            local entity_name = (e.entity and e.entity.name) or (e.destination and e.destination.name)
+            local entity_name = (e.entity and e.entity.valid and e.entity.name) or (e.destination and e.destination.valid and e.destination.name)
             if entity_name and entity_name == name then
                 handler(e)
             end
@@ -119,7 +134,7 @@ function event.entity(name)
         ghost.on_event = function (event_id,handler)
             event.on_event(event_id,function (e)
                 ---@cast e EventData.on_pre_ghost_deconstructed
-                local entity_name = e.ghost and e.ghost.ghost_name
+                local entity_name = e.ghost and e.ghost.valid and e.ghost.ghost_name
                 if entity_name and entity_name == name then
                     handler(e)
                 end

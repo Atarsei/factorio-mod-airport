@@ -6,10 +6,24 @@ local config = {}
 function config.prefix(name)
     return 'Airport-' .. name
 end
-
+---@param name string
+---@return string
+function config.item(name)
+    return name .. '-item'
+end
 
 config.name = {
-    terminal = 'terminal'
+    terminal = 'terminal', -- rename tower later
+    terminal_container = "terminal-container",
+    terminal_proxy = 'terminal-proxy',
+    terminal_loader = "terminal-loader",
+    terminal_sub = "terminal-sub",
+    terminal_connection = "terminal-connection",
+    lane_connection = "lane_connection"
+}
+
+config.color = {
+    terminal = { r = 1, g = 1, b = 1 }
 }
 
 config.path = function (s)
@@ -20,4 +34,9 @@ for key, value in pairs(config.name) do
     config.name[key] = config.prefix(value)
 end
 
+---@param x number
+---@return number
+function config.airport_level(x)
+    return math.floor(1.4*math.log(x+1,math.exp(1)))+3
+end
 return config

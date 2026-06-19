@@ -49,7 +49,7 @@
 ---@alias GuiDefChild GuiDef|GuiDef[]
 ---@alias GuiDefChildFn fun(children?:GuiDefUnresolvedChild[]):GuiDefUnresolvedChild
 ---@alias GuiDefUnresolvedChild GuiDefChild
----@alias GuiDef LuaGuiElement.add_param | {children?: GuiDefUnresolvedChild[]} | {handlers?: string} | {on_created?:fun(LuaGuiElement)}
+---@alias GuiDef LuaGuiElement.add_param | {children?: GuiDefUnresolvedChild[]} | {handlers?: string} | {on_created?:fun(e:LuaGuiElement)}
 
 local event = require("event")
 local util = require("util")
@@ -67,7 +67,7 @@ function ui.define_handlers(symbol,handlers)
     for event_id, handler in pairs(handlers) do
         event.on_event(event_id, function (e)
             ---@cast e GuiEventData
-            if not e.element then return end
+            if not (e.element and e.element.valid) then return end
             local tags = e.element.tags
             if tags and tags.symbol == symbol then
                 handler(e,tags)
@@ -106,7 +106,6 @@ function ui.create( parent,def)
 
     if handlers then
         local tags = element.tags
-        --tags.symbol=handlers
         element.tags = util.merge({tags,{symbol=handlers}})
     end
 
@@ -141,17 +140,92 @@ function ui.h(def)
     end
 end
 
+---@param def GuiDef
+---@return GuiDef
+function ui.hi(def)
+    return def
+end
+
 ---@generic T
----@generic R
 ---@param t {integer:T}
----@param fn fun(index:integer,value:T):R
----@return R
+---@param fn fun(index:integer,value:T):GuiDef?
+---@return GuiDef[]
 function ui.icollect(t,fn)
     local collect= {}
     for index, value in ipairs(t) do
-        table.insert(collect,fn(index,value))
+        local result = fn(index,value)
+        if result then
+            table.insert(collect,result)
+        end
     end
     return collect
+end
+
+ui.close_handler = ui.define_handlers("close", {
+    [defines.events.on_gui_closed] = function(e)
+        local player = game.players[e.player_index]
+        e.element.destroy()
+        player.opened = nil
+    end
+})
+local close_button = ui.define_handlers("close_button",{
+    [defines.events.on_gui_click] =function (e, tag)
+        local player = game.players[e.player_index]
+        e.element.parent.parent.destroy()
+        player.opened = nil
+    end
+})
+local config = require("config")
+---@param title string
+---@param children GuiDef[]
+---@return GuiDef
+function ui.window(title,children)
+    return ui.hi{
+        type = "frame",
+        name = config.prefix "window",
+        direction = "vertical",
+        on_created = function (e)
+            e.auto_center = true
+        end,
+        handlers = ui.close_handler,
+        children = {
+            {
+                type = "flow",
+                name = "titlebar",
+                direction = "horizontal",
+                on_created=function (e)
+                    e.style.vertical_align = "center"
+                    e.style.horizontal_spacing = 8
+                end,
+                children = {
+                    {type = "label",caption = title,style = "frame_title",on_created=function (e)
+                        e.ignored_by_interaction = true
+                    end},
+                    {type = "empty-widget",style = "draggable_space_header",
+                    on_created=function (dragger)
+                        dragger.style.horizontally_stretchable = true
+                        dragger.style.minimal_height = 24
+                        dragger.drag_target = dragger.parent.parent
+                    end},
+                    {
+                        type = "sprite-button",
+                        name = "my_gui_close_button",
+                        style = "frame_action_button",
+                        sprite = "utility/close",
+                        hovered_sprite = "utility/close_black",
+                        clicked_sprite = "utility/close_black",
+                        handlers = close_button
+                    },
+                }
+            },
+            {
+                type = "frame",
+                style = "inside_shallow_frame_with_padding",
+                direction = "vertical",
+                children = children
+            }
+        }
+    }
 end
 
 return ui
