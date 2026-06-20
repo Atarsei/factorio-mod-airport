@@ -38,7 +38,7 @@ data:extend({
         tile_height = 5,
         energy_source = { type = "void" },
         energy_usage = "1W",
-        crafting_categories = {"basic-crafting"},
+        crafting_categories = { "basic-crafting" },
         crafting_speed = 1,
         graphics_set = {
             animation = placeholder(5),
@@ -65,13 +65,14 @@ data:extend({
                 filter = config.name.terminal_connection
             },
             {
-                volume =1,
+                volume = 1,
                 production_type = "output",
                 pipe_connections = {
-                    { position = { -2, 0 },  direction = defines.direction.west,  connection_category = "lane-pipe", },
-                    { position = { 2, 0 },   direction = defines.direction.east,  connection_category = "lane-pipe", },
-                    { position = { 0, -2 }, direction = defines.direction.north, connection_category = "lane-pipe", },
-                }
+                    { position = { -2, 0 }, direction = defines.direction.west,  connection_category = "lane-pipe", flow_direction = "output" },
+                    { position = { 2, 0 },  direction = defines.direction.east,  connection_category = "lane-pipe", flow_direction = "output" },
+                    { position = { 0, -2 }, direction = defines.direction.north, connection_category = "lane-pipe", flow_direction = "output" },
+                },
+                filter = config.name.lane_connection
             }
         },
         render_layer = "floor",
