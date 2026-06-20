@@ -168,3 +168,4 @@ event.entity(config.name.terminal_loader)
     end)
 
     local terminal_sub = require("terminal_sub")
+    local terminal_tower = require("terminal_tower")

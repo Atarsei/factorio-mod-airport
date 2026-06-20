@@ -3,9 +3,9 @@ local config = require("config")
 local math2d = require("math2d")
 
 Event.on_init(function()
-    ---@type table<string,FluidGroups?>
+    ---@type table<string,FluidGroups<any>?>
     storage.fce_group = {}
-    for _, value in ipairs({ config.name.terminal_connection, config.name.terminal_connection }) do
+    for _, value in ipairs({ config.name.terminal_connection, config.name.lane_connection }) do
         storage.fce_group[value] = {
             net = {}, lookup = {}
         }
@@ -16,9 +16,11 @@ end)
 ---@field arr {[integer]:FCE}
 ---@field len number
 local Group = {}
----@alias FluidGroups {net:table<integer,Net?>,lookup:table<integer,FCE>}
+---@generic T
+---@alias FluidGroups<T> {net:table<integer,Net?>,lookup:table<integer,FCE>,data:T}
 
----@class FCE
+---@generic T
+---@class FCE<T>
 ---@field entity LuaEntity
 ---@field fluidbox_idx number
 ---@field prev_group_id number?
@@ -32,7 +34,7 @@ function FCE:get_group_id()
     return self.entity.fluidbox.get_fluid_segment_id(self.fluidbox_idx)
 end
 
----@return FluidGroups
+---@return FluidGroups<T>
 function FCE:get_fluid_groups()
     local proto = self.entity.fluidbox.get_prototype(self.fluidbox_idx)
     assert(type(proto) ~= "table", "FCE prototype define can't handle multi fluid_box merge")
@@ -47,7 +49,7 @@ end
 function FCE.register(entity, fluidbox_idx)
     ---@type FCE
     local self = { entity = entity, fluidbox_idx = fluidbox_idx }
-    setmetatable(self,FCE)
+    setmetatable(self, FCE)
     local id = self:get_group_id()
     local groups = self:get_fluid_groups()
     Group.insert(groups, id, self.entity.unit_number, self)
@@ -82,14 +84,14 @@ function FCE:net_size()
     return Group.get(groups, id).len
 end
 
----@param groups FluidGroups
+---@param groups FluidGroups<any>
 ---@param id integer
 ---@return Net
 function Group.get(groups, id)
     return groups.net[id]
 end
 
----@param groups FluidGroups
+---@param groups FluidGroups<any>
 ---@param id integer
 function Group.clean_dirty(groups, id)
     local net = groups.net[id]
@@ -103,7 +105,7 @@ function Group.clean_dirty(groups, id)
     end
 end
 
----@param groups FluidGroups
+---@param groups FluidGroups<any>
 ---@param id integer
 ---@param unit_number integer
 ---@param fce FCE
@@ -122,7 +124,7 @@ function Group.insert(groups, id, unit_number, fce)
     fce.prev_group_id = id
 end
 
----@param groups FluidGroups
+---@param groups FluidGroups<any>
 ---@param id integer
 ---@param unit_number integer?
 function Group.remove(groups, id, unit_number)
@@ -137,7 +139,7 @@ function Group.remove(groups, id, unit_number)
     end
 end
 
----@param groups FluidGroups
+---@param groups FluidGroups<any>
 ---@param id integer
 ---@return Net
 function Group.merge(groups, id, target_id)
@@ -161,13 +163,15 @@ Event.on_nth_tick(1, function(_)
             for unit_number, fce in pairs(net.arr) do
                 local entity = fce.entity
                 local pos = entity.position
+                local borderbox = entity.prototype.selection_box
                 rendering.draw_rectangle {
                     color = color,
-                    left_top = math2d.position.add(pos, { -2.5, -2.5 }),
-                    right_bottom = math2d.position.add(pos, { 2.5, 2.5 }),
+                    left_top = math2d.position.add(pos, borderbox.left_top),
+                    right_bottom = math2d.position.add(pos, borderbox.right_bottom),
                     surface = entity.surface,
                     time_to_live = 1,
-                    width = 10
+                    width = 2,
+                    only_in_alt_mode = true,
                 }
             end
         end

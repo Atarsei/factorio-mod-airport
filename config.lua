@@ -14,6 +14,7 @@ end
 
 config.name = {
     terminal = 'terminal', -- rename tower later
+    terminal_tower = 'terminal-tower',
     terminal_container = "terminal-container",
     terminal_proxy = 'terminal-proxy',
     terminal_loader = "terminal-loader",
