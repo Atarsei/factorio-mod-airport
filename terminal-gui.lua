@@ -1,5 +1,5 @@
 local ui = require("ui")
-
+local Airport = require("airport")
 local airport_handlers = ui.batch_handlers("airport")
 
 
@@ -9,25 +9,25 @@ local choose_item = airport_handlers.define("airport-choose-item", {
         local airport = storage.airport[tag.airport_id]
         local slot_index = tag.slot_index
         ---@cast item PrototypeWithQuality?
-        airport.slot[slot_index].item = item
+        airport.slots[slot_index].item = item
     end
 })
 local change_slot_state = airport_handlers.define("change_slot_state",{
     [defines.events.on_gui_switch_state_changed]=function (e, tag)
         local airport = storage.airport[tag.airport_id]
-        airport.slot[tag.slot_index].mode = e.element.switch_state
+        airport.slots[tag.slot_index].mode = e.element.switch_state
     end
 })
 local change_slider = airport_handlers.define("change_slider",{
     [defines.events.on_gui_value_changed]=function (e, tag)
         local airport = storage.airport[tag.airport_id]
-        airport.slot[tag.slot_index].threshold = e.element.slider_value
+        airport.slots[tag.slot_index].threshold = e.element.slider_value
     end
 })
 local change_priority = airport_handlers.define("change_priority",{
     [defines.events.on_gui_text_changed]=function (e, tag)
         local airport = storage.airport[tag.airport_id]
-        local slot = airport.slot[tag.slot_index]
+        local slot = airport.slots[tag.slot_index]
         slot.priority= tonumber(e.text) or slot.priority
     end
 })
@@ -36,7 +36,7 @@ local change_priority = airport_handlers.define("change_priority",{
 ---@param slot_index integer
 ---@return GuiDef
 local function Gui_airport_slot(airport, slot_index)
-    local slot = airport.slot[slot_index]
+    local slot = airport.slots[slot_index]
 
     return {
         type = "frame",
@@ -88,7 +88,7 @@ local function Gui_airport_slot(airport, slot_index)
                                 end
                             },
                             { type = "label",       caption = "In Store" },
-                            { type = "progressbar", value = 0.3 },
+                            { type = "progressbar", value = Airport.get_slot_content(slot) },
                             { type = "label",       caption = "Threshold" },
                             {
                                 type = "slider",
@@ -113,14 +113,13 @@ local function Gui_airport_slot(airport, slot_index)
     }
 end
 
---- @param airport_id integer
+--- @param airport Airport
 --- @return GuiDef
-local function Gui_airport(airport_id)
-    assert(airport_id, "Airport ID is required to open the GUI")
-    local airport = storage.airport[airport_id]
-    local entity = airport.terminal.entity
+local function Gui_airport(airport)
+    local entity = airport.tower.entity
+    local size = airport.tower.terminal_fce:net_size()
 
-    return ui.window("Airport",{{
+    return ui.window("Airport_"..size,{{
             {
                 type = "entity-preview",
                 style = "wide_entity_button",
@@ -136,7 +135,7 @@ local function Gui_airport(airport_id)
                 type = "flow",
                 direction = "vertical",
                 children={
-                    ui.icollect(airport.slot,function (index, value)
+                    ui.icollect(airport.slots,function (index, value)
                         return Gui_airport_slot(airport, index)
                     end)
                 }

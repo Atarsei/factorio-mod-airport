@@ -27,7 +27,7 @@ local filters_disable = {}
 function event.on_event(event_id, handler, filters)
     if type(event_id) == "table" then
         for _, id in pairs(event_id) do
-            event.on_event(id, handler,filters)
+            event.on_event(id, handler, filters)
         end
         return
     end
@@ -44,12 +44,12 @@ function event.on_event(event_id, handler, filters)
         if filters then
             local old_filters = script.get_event_filter(event_id) or {}
             for _, value in ipairs(filters) do
-                table.insert(old_filters,value)
+                table.insert(old_filters, value)
             end
-            script.set_event_filter(event_id,old_filters)
+            script.set_event_filter(event_id, old_filters)
         else
             filters_disable[event_id] = true
-            script.set_event_filter(event_id,nil)
+            script.set_event_filter(event_id, nil)
         end
     end
 end
@@ -60,49 +60,50 @@ local init_handlers = nil
 function event.on_init(handler)
     if not init_handlers then
         init_handlers = {}
-        script.on_init(function ()
+        script.on_init(function()
             for _, fn in ipairs(init_handlers) do
                 fn()
             end
         end)
     end
-    table.insert(init_handlers,handler)
+    table.insert(init_handlers, handler)
 end
 
 ---@type table<integer,fun(e: NthTickEventData)[]?>
 local nth_tick_handlers = {}
 ---@param tick integer|integer[]
 ---@param handler fun(e: NthTickEventData)
-function event.on_nth_tick(tick,handler)
+function event.on_nth_tick(tick, handler)
     if type(tick) == "table" then
         for _, value in ipairs(tick) do
-            event.on_nth_tick(value,handler)
+            event.on_nth_tick(value, handler)
         end
         return
     end
     if not nth_tick_handlers[tick] then
-        nth_tick_handlers[tick]={}
-        script.on_nth_tick(tick,function (e)
+        nth_tick_handlers[tick] = {}
+        script.on_nth_tick(tick, function(e)
             for _, fn in ipairs(nth_tick_handlers[tick]) do
                 fn(e)
             end
         end)
     end
-    table.insert(nth_tick_handlers[tick],handler)
+    table.insert(nth_tick_handlers[tick], handler)
 end
+
 ---@type fun(e:NthTickEventData)[]?
 local next_tick_list = nil
 ---@param handler fun(e: NthTickEventData)
 function event.next_tick(handler)
     if next_tick_list == nil then
-        next_tick_list = {handler}
-        event.on_nth_tick(1,function (e)
+        next_tick_list = { handler }
+        event.on_nth_tick(1, function(e)
             for _ = 1, #next_tick_list, 1 do
                 table.remove(next_tick_list)(e)
             end
         end)
     else
-        table.insert(next_tick_list,handler)
+        table.insert(next_tick_list, handler)
     end
 end
 
@@ -111,38 +112,56 @@ end
 function event.entity(name)
     ---@class Event.Entity
     local entity = {}
-    local filters = {{filter="name",name=name}}
+    local filters = { { filter = "name", name = name } }
     --- event_data must have "entity" | "destination" field
     ---@param event_id event_type
     ---@param handler fun(event: EventData)
-    entity.on_event = function (event_id,handler)
-        event.on_event(event_id,function (e)
+    entity.on_event = function(event_id, handler)
+        event.on_event(event_id, function(e)
             ---@cast e EventData.on_built_entity | EventData.on_pre_entity_settings_pasted
-            local entity_name = (e.entity and e.entity.valid and e.entity.name) or (e.destination and e.destination.valid and e.destination.name)
+            local entity_name = (e.entity and e.entity.valid and e.entity.name) or
+                (e.destination and e.destination.valid and e.destination.name)
             if entity_name and entity_name == name then
                 handler(e)
             end
-        end,(event_id~=defines.events.on_gui_opened) and filters or nil)
+        end, (event_id ~= defines.events.on_gui_opened) and filters or nil)
         return entity
     end
-    entity.ghost = function ()
+    entity.ghost = function()
         ---@class Event.Ghost
         local ghost = {}
         --- event_data must have "ghost" field
         ---@param event_id event_type
         ---@param handler fun(event: EventData)
-        ghost.on_event = function (event_id,handler)
-            event.on_event(event_id,function (e)
+        ghost.on_event = function(event_id, handler)
+            event.on_event(event_id, function(e)
                 ---@cast e EventData.on_pre_ghost_deconstructed
                 local entity_name = e.ghost and e.ghost.valid and e.ghost.ghost_name
                 if entity_name and entity_name == name then
                     handler(e)
                 end
-            end,{{filter="ghost_name",name = name}})
+            end, { { filter = "ghost_name", name = name } })
             return ghost
         end
     end
     return entity
 end
 
+---@alias EventBuildData EventData.on_robot_built_entity|EventData.on_built_entity|EventData.on_space_platform_built_entity|EventData.on_entity_cloned|EventData.script_raised_built|EventData.script_raised_revive
+event.on_entity_build = {
+    defines.events.on_robot_built_entity,
+    defines.events.on_built_entity,
+    defines.events.on_space_platform_built_entity,
+    defines.events.on_entity_cloned,
+    defines.events.script_raised_built,
+    defines.events.script_raised_revive
+}
+---@alias EventDestotyData EventData.on_player_mined_entity|EventData.on_robot_mined_entity|EventData.on_space_platform_mined_entity|EventData.on_entity_died|EventData.script_raised_destroy
+event.on_entity_destory = {
+    defines.events.on_player_mined_entity,
+    defines.events.on_robot_mined_entity,
+    defines.events.on_space_platform_mined_entity,
+    defines.events.on_entity_died,
+    defines.events.script_raised_destroy
+}
 return event

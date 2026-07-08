@@ -1,14 +1,14 @@
 local config = require("config")
 function placeholder(tilesize)
-    local v= {
+    local v = {
         filename = config.path "graphic/placeholder_v.png",
         size = { 64, 64 },
-        scale = tilesize/2
+        scale = tilesize / 2
     }
-    local h= {
+    local h = {
         filename = config.path "graphic/placeholder_h.png",
         size = { 64, 64 },
-        scale = tilesize/2
+        scale = tilesize / 2
     }
     return {
         north = v,
@@ -16,4 +16,22 @@ function placeholder(tilesize)
         south = v,
         west = h
     }
+end
+
+function placeholder_animation(tilesize,vh)
+    local v = {
+        filename = config.path "graphic/placeholder_v.png",
+        size = { 64, 64 },
+        scale = tilesize / 2
+    }
+    local h = {
+        filename = config.path "graphic/placeholder_h.png",
+        size = { 64, 64 },
+        scale = tilesize / 2
+    }
+    if vh=="v"then
+        return v
+    else
+        return h
+    end
 end

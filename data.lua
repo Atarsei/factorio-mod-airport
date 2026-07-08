@@ -106,4 +106,5 @@ data:extend({
     },
 })
 
-require("prototype.terminal")
+require("prototypes.terminal")
+require("prototypes.taxiway")

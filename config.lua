@@ -19,8 +19,10 @@ config.name = {
     terminal_proxy = 'terminal-proxy',
     terminal_loader = "terminal-loader",
     terminal_sub = "terminal-sub",
+    park = "park",
     terminal_connection = "terminal-connection",
-    lane_connection = "lane_connection"
+    park_connection = "park-connection",
+    taxiway_connection = "taxiway-connection"
 }
 
 config.color = {
