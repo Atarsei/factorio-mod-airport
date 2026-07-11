@@ -108,3 +108,4 @@ data:extend({
 
 require("prototypes.terminal")
 require("prototypes.taxiway")
+require("prototypes.runway")

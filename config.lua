@@ -20,9 +20,13 @@ config.name = {
     terminal_loader = "terminal-loader",
     terminal_sub = "terminal-sub",
     park = "park",
+    taxiway = "taxiway",
+    taxiway_3x3 = "taxiway-3x3",
+    runway = "runway",
     terminal_connection = "terminal-connection",
     park_connection = "park-connection",
-    taxiway_connection = "taxiway-connection"
+    taxiway_connection = "taxiway-connection",
+    runway_connection = "runway-connection",
 }
 
 config.color = {

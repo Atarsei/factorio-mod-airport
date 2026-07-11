@@ -171,12 +171,15 @@ data:extend({
         stack_size = 20,
         place_result = config.name.terminal_sub,
     },
-        {
+    {
         type = "assembling-machine",
         name = config.name.park,
 
         selection_box = { { -2.5, -2.5 }, { 2.5, 2.5 } },
         collision_box = { { -2.4, -2.4 }, { 2.4, 2.4 } },
+        collision_mask = {
+            layers = {transport_belt=true}
+        },
         build_grid_size = 1,
         icon = config.path 'graphic/placeholder_v.png',
         tile_width = 5,
@@ -189,10 +192,10 @@ data:extend({
             working_visualisations = {
                 {
                     render_layer = "floor",
-                    north_animation = require("graphic.terminal.park").north,
-                    east_animation = require("graphic.terminal.park").east,
-                    south_animation = require("graphic.terminal.park").south,
-                    west_animation = require("graphic.terminal.park").west,
+                    north_animation = require("graphic.park.park").north,
+                    east_animation = require("graphic.park.park").east,
+                    south_animation = require("graphic.park.park").south,
+                    west_animation = require("graphic.park.park").west,
                     always_draw = true
                 }
             }
@@ -200,9 +203,9 @@ data:extend({
         fluid_boxes = {
             {
                 volume = 1,
-                production_type = "output",
+                production_type = "input",
                 pipe_connections = {
-                    { position = { 0, 2 }, direction = defines.direction.south, connection_category = "taxiway-pipe"},
+                    { position = { 0, 2 }, direction = defines.direction.south, connection_category = "taxiway-pipe",flow_direction = "input-output" },
                 },
                 filter = config.name.taxiway_connection
             },
@@ -210,7 +213,7 @@ data:extend({
                 volume = 1,
                 production_type = "input",
                 pipe_connections = {
-                    { position = { 0, -2 }, direction = defines.direction.north,  connection_category = "park-pipe", flow_direction = "input"  },
+                    { position = { 0, -2 }, direction = defines.direction.north, connection_category = "park-pipe", flow_direction = "input" },
                 },
                 filter = config.name.park_connection
             }
@@ -228,6 +231,3 @@ data:extend({
         place_result = config.name.park,
     },
 })
-local x = require("__base__.prototypes.entity.biter-ai-settings")
-print("cccccccc")
-print(serpent.block(x))

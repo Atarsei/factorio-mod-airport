@@ -10,11 +10,11 @@ end
 ---@type data.PipePrototype
 local taxiway = {
     type = "pipe",
-    name = 'taxiway',
+    name = config.name.taxiway,
     selection_box = { { -0.5, -0.5 }, { 0.5, 0.5 } },
     collision_box = { { -0.2, -0.2 }, { 0.2, 0.2 } },
     collision_mask = {
-        layers = {}
+        layers = {transport_belt=true}
     },
     fluid_box = {
         volume = 1,
@@ -24,7 +24,8 @@ local taxiway = {
             { position = { 0, -0 }, direction = defines.direction.north, connection_category = "taxiway-pipe", },
             { position = { 0, 0 },  direction = defines.direction.south, connection_category = "taxiway-pipe", },
         },
-        hide_connection_info = true
+        hide_connection_info = true,
+        filter = config.name.taxiway_connection
     },
     horizontal_window_bounding_box = { { 0, 0 }, { 0, 0 } },
     vertical_window_bounding_box = { { 0, 0 }, { 0, 0 } },
@@ -48,12 +49,13 @@ local taxiway = {
         ending_right = sp("end_right"),
         ending_left = sp("end_left"),
     },
-    minable = { mining_time = 0.2, result = "taxiway" },
-    flags = { "player-creation" }
+    minable = { mining_time = 0.2, result = config.name.taxiway },
+    flags = { "player-creation" },
+    icon_draw_specification = {shift = {0, 0}, scale = 0, scale_for_many = 0, render_layer = "entity-info-icon"}
 }
 
 local taxiway3 = table.deepcopy(taxiway)
-taxiway3.name = "taxiway3"
+taxiway3.name = config.name.taxiway_3x3
 taxiway3.selection_box = { { -1.5, -1.5 }, { 1.5, 1.5 } }
 taxiway3.collision_box = { { -1.2, -1.2 }, { 1.2, 1.2 } }
 taxiway3.fluid_box.pipe_connections[1].position = { -1, 0 }
@@ -63,20 +65,20 @@ taxiway3.fluid_box.pipe_connections[4].position = { 0, 1 }
 for k, v in pairs(taxiway3.pictures) do
     v.scale = v.scale * 3
 end
-taxiway3.minable.result = "taxiway3"
+taxiway3.minable.result = config.name.taxiway_3x3
 
 data:extend {
     {
         type = 'item',
-        name = 'taxiway',
-        place_result = "taxiway",
+        name = config.name.taxiway,
+        place_result = config.name.taxiway,
         stack_size = 100,
         icon = config.path "graphic/taxiway/cross.png"
     },
     {
         type = 'item',
-        name = 'taxiway3',
-        place_result = "taxiway3",
+        name = config.name.taxiway_3x3,
+        place_result = config.name.taxiway_3x3,
         stack_size = 100,
         icon = config.path "graphic/taxiway/cross.png"
     },

@@ -46,7 +46,7 @@ end
 
 ---@param prev_id integer
 ---@param fce FCE
-function BaseManager:remove(prev_id,fce)
+function BaseManager:remove(prev_id, fce)
     local net = self.net[prev_id]
     ---@type integer
     local unit_number = fce.entity.unit_number
@@ -83,7 +83,7 @@ function BaseManager:clean_dirty(id)
     if net then
         for unit_number, fce in pairs(net.arr) do
             if fce:get_group_id() ~= id then
-                self:remove(id,fce)
+                self:remove(id, fce)
                 self:insert(fce)
             end
         end
@@ -97,6 +97,7 @@ end
 
 ---@class TerminalManager : BaseManager
 ---@field tower table<integer,LuaEntity?>
+---@field parks table<integer, table<integer, LuaEntity?>?>
 local TerminalManager = {}
 setmetatable(TerminalManager, { __index = BaseManager })
 TerminalManager.__index = TerminalManager
@@ -105,9 +106,10 @@ script.register_metatable("fce_terminal_manager", TerminalManager)
 ---@return TerminalManager
 function TerminalManager.new()
     ---@class TerminalManager
-    local self = BaseManager.new() -- 初始化父类数据
+    local self = BaseManager.new()      -- 初始化父类数据
     setmetatable(self, TerminalManager) -- 挂载子类元表
-    self.tower = {} -- 子类专属的业务附加数据表
+    self.tower = {}
+    self.parks = {}
     return self
 end
 
@@ -117,26 +119,50 @@ function TerminalManager:merge(prev_id, target_id)
         self.tower[target_id] = self.tower[prev_id]
         self.tower[prev_id] = nil
     end
+    if self.parks[prev_id] then
+        self.parks[target_id] = self.parks[target_id] or {}
+        for unit_number, park in pairs(self.parks[prev_id]) do
+            self.parks[target_id][unit_number] = park
+        end
+        self.parks[prev_id] = nil
+    end
     return merged_net
 end
 
 function TerminalManager:insert(fce)
-    BaseManager.insert(self,fce)
+    BaseManager.insert(self, fce)
     local id = fce:get_group_id()
     local prototype = fce.entity.prototype.name
-    if prototype == config.name.terminal_tower and self.tower[id]==nil then
+    if prototype == config.name.terminal_tower and self.tower[id] == nil then
         self.tower[id] = fce.entity
+    end
+    if prototype == config.name.terminal_tower or config.name.terminal_sub then
+        local park = fce.entity.get_fluid_box_neighbours(2)
+        if park and #park == 1 then
+            local neighbor = park[1].entity
+            if neighbor and neighbor.valid then
+                self.parks[id] = self.parks[id] or {}
+                self.parks[id][neighbor.unit_number] = neighbor
+            end
+        end
     end
 end
 
-function TerminalManager:remove(prev_id,fce)
-    BaseManager.remove(self,prev_id,fce)
+function TerminalManager:remove(prev_id, fce)
+    BaseManager.remove(self, prev_id, fce)
     local prototype = fce.entity.prototype.name
     if prototype == config.name.terminal_tower and self.tower[prev_id] == fce.entity then
         self.tower[prev_id] = nil
     end
+    if prototype == config.name.terminal_tower or config.name.terminal_sub then
+        if self.parks[prev_id] then
+            self.parks[prev_id][fce.entity.unit_number] = nil
+            if next(self.parks[prev_id]) == nil then
+                self.parks[prev_id] = nil
+            end
+        end
+    end
 end
-
 
 -- ============================================================================
 -- 3. 全局生命周期与存储路由
@@ -147,7 +173,7 @@ Event.on_init(function()
     storage.managers = {}
     -- 根据不同的流体 Filter，分配不同的管理器！
     -- 如果是普通管道流体，用基类；如果是特殊流体，用子类
-    storage.managers[config.name.park_connection] = BaseManager.new()
+    storage.managers[config.name.taxiway_connection] = BaseManager.new()
     storage.managers[config.name.terminal_connection] = TerminalManager.new()
 end)
 
@@ -183,6 +209,13 @@ function FCE:get_manager()
     return manager
 end
 
+---@return Net | nil
+function FCE:get_net()
+    local id = self:get_group_id()
+    local manager = self:get_manager()
+    return manager.net[id]
+end
+
 ---@param entity LuaEntity
 ---@param fluidbox_idx number
 ---@return FCE
@@ -212,7 +245,7 @@ end
 function FCE:unregister()
     local id = self:get_group_id()
     local manager = self:get_manager()
-    manager:remove(id,self)
+    manager:remove(id, self)
     local neighbors = self.entity.get_fluid_box_neighbours(self.fluidbox_idx)
     if #neighbors >= 2 then
         Event.next_tick(function(_)
@@ -252,6 +285,27 @@ Event.on_nth_tick(1, function(_)
                         width = 2,
                         only_in_alt_mode = true,
                     }
+                end
+            end
+            if fluid_name == config.name.terminal_connection then
+                ---@cast manager TerminalManager
+                local parks = manager.parks[net_id]
+                if parks then
+                    for unit_number, park in pairs(parks) do
+                        if park and park.valid then
+                            local pos = park.position
+                            local borderbox = park.prototype.selection_box
+                            rendering.draw_rectangle {
+                                color = color,
+                                left_top = math2d.position.add(pos, borderbox.left_top),
+                                right_bottom = math2d.position.add(pos, borderbox.right_bottom),
+                                surface = park.surface,
+                                time_to_live = 1,
+                                width = 1,
+                                only_in_alt_mode = true,
+                            }
+                        end
+                    end
                 end
             end
         end

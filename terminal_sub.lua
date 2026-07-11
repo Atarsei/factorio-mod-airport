@@ -65,7 +65,6 @@ Event.entity(config.name.terminal_sub)
         ---@cast event EventBuildData
         local entity = event.entity
         TerminalSub.create(entity)
-        game.print("id:" .. entity.get_fluid_segment_id(1))
     end)
     .on_event(
         Event.on_entity_destory,
